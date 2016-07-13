@@ -1,0 +1,1054 @@
+//7/10/16 
+//ROBOT 26E LEJOS Program by Tim Lockwood
+//2015 Epiq Award winner.
+//vist timsrobots - https://sites.google.com/site/timsrobots/ for more info.
+//Use a fully charged battery when using this program to keep the robot in the 8x8 foot space.
+//Stars and Stripes Forever by John Pillips Sousa
+//HAL 9000 excerpts from the 1968 film "2001: A Space Odyssey" directed by Stanley Kubrick. 
+//Pac-Man (1980) excerpt composed by Toshio Kai.
+//libraries
+use Libraries.Robots.Lego.Button
+use Libraries.Robots.Lego.Sound
+use Libraries.Robots.Lego.Screen
+use Libraries.Robots.Lego.Utility
+use Libraries.Robots.Lego.Motor
+use Libraries.Robots.Lego.TouchSensor
+use Libraries.Robots.Lego.UltrasonicSensor
+use Libraries.Robots.Lego.ColorSensor
+use Libraries.Robots.Lego.GyroSensor
+use Libraries.System.File
+use Libraries.Sound.Audio
+//instantiate objects
+Button buttonCtrl
+Sound sound
+Screen screen
+Utility utility
+Motor motor
+UltrasonicSensor ultrasonicSensor
+TouchSensor touchSensor
+ColorSensor colorSensor
+GyroSensor gyroSensor
+File audio1
+File audio2
+File audio3
+File audio4
+//set the path or location of the audio files, this assumes the wav files exisit in the same directory as the running JAR file. 
+audio1:SetPath("operatnl.wav")
+audio2:SetPath("goodbye.wav")
+audio3:SetPath("1moment2.wav")
+audio4:SetPath("pacman_intro8.wav")
+//set sensor ports
+ultrasonicSensor:SetPort(2)
+touchSensor:SetPort(4)
+colorSensor:SetPort(1)
+gyroSensor:SetPort(3)
+//create some variables and set their value
+integer musicspeed=1
+integer vol=100 
+integer spin72=46 //speed for 288 turn
+integer spin90=19
+//  creates pitch varible for the musical tempered scale with letter note names (A-G) and octive displacement (0-9) 
+//The lowcase b is the symbol for flat. Sharps are created by refering to the next name down in the list F# = Gb.
+integer C0=16
+integer Db0=17
+integer D0=18
+integer Eb0=19
+integer E0=21
+integer F0=22
+integer Gb0=23
+integer G0=24
+integer Ab0=26
+integer A0=28
+integer Bb0=29
+integer B0=31
+integer C1=33
+integer Db1=35
+integer D1=37
+integer Eb1=39
+integer E1=41
+integer F1=44
+integer Gb1=46
+integer G1=49
+integer Ab1=52
+integer A1=55
+integer Bb1=58
+integer B1=62
+integer C2=65
+integer Db2=69
+integer D2=73
+integer Eb2=78
+integer E2=82
+integer F2=87
+integer Gb2=92
+integer G2=98
+integer Ab2=104
+integer A2=110
+integer Bb2=117
+integer B2=123
+integer C3=131
+integer Db3=139
+integer D3=147
+integer Eb3=156
+integer E3=165
+integer F3=175
+integer Gb3=185
+integer G3=196
+integer Ab3=208
+integer A3=220
+integer Bb3=233
+integer B3=247
+integer C4=262
+integer Db4=277
+integer D4=294
+integer Eb4=311
+integer E4=330
+integer F4=349
+integer Gb4=370
+integer G4=392
+integer Ab4=415
+integer A4=440
+integer Bb4=466
+integer B4=494
+integer C5=523
+integer Db5=554
+integer D5=587
+integer Eb5=622
+integer E5=659
+integer F5=698
+integer Gb5=740
+integer G5=784
+integer Ab5=831
+integer A5=880
+integer Bb5=932
+integer B5=988
+integer C6=1047
+integer Db6=1109
+integer D6=1175
+integer Eb6=1245
+integer E6=1319
+integer F6=1397
+integer Gb6=1480
+integer G6=1568
+integer Ab6=1661
+integer A6=1760
+integer Bb6=1865
+integer B6=1976
+integer C7=2093
+integer Db7=2217
+integer D7=2349
+integer Eb7=2489
+integer E7=2637
+integer F7=2794
+integer Gb7=2960
+integer G7=3136
+integer Ab7=3322
+integer A7=3520
+integer Bb7=3729
+integer B7=3951
+integer C8=4186
+integer Db8=4435
+integer D8=4699
+integer Eb8=4978
+integer E8=5274
+integer F8=5588
+integer Gb8=5920
+integer G8=6272
+integer Ab8=6645
+integer A8=7040
+integer Bb8=7459
+integer B8=7902
+integer C9=8372
+integer Db9=8870
+integer D9=9397
+integer Eb9=9956
+integer E9=10548
+integer F9=11175
+integer Gb9=11840
+integer G9=12544
+integer Ab9=13290
+integer A9=14080
+integer Bb9=14917
+integer B9=15804
+//create duratation variables W = Whole Note h= half note, q=qu. dq=dotted quarter
+integer w=1600// Whole Note
+integer dh=1200// Dotted Half Note
+integer h=800// Half Note
+integer dq=600// Dotted Quarter Note
+integer q=400// Quarter Note
+integer de=300// Dotted Eight Note
+integer e=200 // Eigth note
+integer s=100 // 16th Note
+// The programer can now call for musical tones using the note names and octive and the length of the sound using traditional names. 
+// sound:PlayTone(A4,w) this will create the a sound the fequency of 440 htz lasting 1600 milliseconds 
+// to create musical silence use utility:DelayMilliseconds(W) using the duratation varibles. 
+
+//output to the screen
+screen:OutputCenter("STARS &", 1)
+screen:OutputCenter("STRIPES", 2)
+screen:OutputCenter("<=slow >=fast", 4)
+screen:OutputCenter("v=soft ^=loud", 5)
+buttonCtrl:SetLightPattern(3)
+// Set to full volume and play two intro wav files then wait a little
+sound:SetVolume(100) 
+sound:PlayAudio(audio3)
+sound:SetVolume(20) 
+sound:PlayAudio(audio4)
+utility:DelayMilliseconds(w)
+buttonCtrl:SetLightPattern(8)
+//start a loop to permit changing the volume and speed settings and loop till the touch sensor is held down.
+repeat until touchSensor:IsPressed()
+    if buttonCtrl:IsButtonPressed(buttonCtrl:DOWN_BUTTON)
+        vol=vol-10
+        if vol <1
+            vol=10
+        end
+    elseif buttonCtrl:IsButtonPressed(buttonCtrl:UP_BUTTON)
+        vol=vol+10
+        if vol >100
+            vol=100
+        end
+    elseif buttonCtrl:IsButtonPressed(buttonCtrl:RIGHT_BUTTON)
+        musicspeed=musicspeed+1
+        if musicspeed>4
+           musicspeed=4
+        end
+    elseif buttonCtrl:IsButtonPressed(buttonCtrl:LEFT_BUTTON)
+            musicspeed=musicspeed-1
+        if musicspeed<1
+           musicspeed=1
+        end
+    end
+// reset Variables for note length
+w=1600/musicspeed // Whole Note
+dh=1200/musicspeed// Dotted Half Note
+h=800/musicspeed // Half Note
+dq=600/musicspeed // Dotted Quarter Note
+q=400/musicspeed // Quarter Note
+de=300/musicspeed// Dotted Eight Note
+e=200/musicspeed // Eigth note
+s=100/musicspeed // 16th Note
+//once the program has executed and display is set up it will play the following sounds until the touch sensor it held down.
+sound:SetVolume(100) 
+sound:PlayAudio(audio1)// HAL let's us know everything is ready.
+utility:DelayMilliseconds(w)
+sound:SetVolume(vol) 
+colorSensor:SetLightColor(colorSensor:BLUE)  
+sound:PlayTone(Eb6,e)
+colorSensor:SetLightColor(colorSensor:RED)
+utility:DelayMilliseconds(e)
+colorSensor:SetLightColor(colorSensor:WHITE)
+buttonCtrl:SetLightPattern(5)
+end //now it is time to go!
+//Create a delay and tempo count off before song
+repeat 2 times 
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(1000,q)
+    utility:DelayMilliseconds(q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(Eb3,q) 
+    utility:DelayMilliseconds(q)
+end 
+repeat 4 times 
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(Eb4,e) 
+    utility:DelayMilliseconds(e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(Eb4,e) 
+    utility:DelayMilliseconds(e)
+end 
+colorSensor:SetLightColor(colorSensor:WHITE)
+utility:DelayMilliseconds(w) // 4 beat silence before start
+sound:SetVolume(vol) 
+
+// ======= Song starts ======= 
+// This is a very linear program.The song is divided in to numbered measures.
+//First are the  directions to the motors followed by notes names and lengths.  
+//The rotate commands keep working until they are changed or stopped. 
+//The playing of the music creates a time control for making the robots movement. 
+//Each measure create a 1600 milliseconds “frame�? for movement.  
+// Set the starting speed of the motors.
+motor:SetSpeed("A",60)
+motor:SetSpeed("B",60)
+motor:SetSpeed("C",60)
+//1 Stars and strips- Measure 1, four beats
+    motor:RotateBackward("A")
+    motor:RotateForward("B")//spin
+    motor:RotateBackward("C")//spin
+    sound:PlayTone(Eb4,h)
+    sound:PlayTone(D4,dq)
+    sound:PlayTone(Eb4,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//2 each measure is 4 beats for 4 quarter notes
+    motor:RotateForward("A")
+    sound:PlayTone(C4,q)
+    motor:RotateBackward("A")
+    sound:PlayTone(Eb4,h)    
+    motor:RotateForward("A")
+    motor:Stop(motor:MOTOR_B)
+    motor:Stop(motor:MOTOR_C)
+    sound:PlayTone(F4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//3  spin other way
+    motor:SetSpeed("B",58)  // While programing works in a digial world, the motors work in a an analog enviroment of the real world.
+    motor:SetSpeed("C",59) //Friction, slippage, the effects of inertia all effect the reversing of the spin of the robot at this point. 
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")//spin
+    motor:RotateForward("C")//spin
+    sound:PlayTone(Gb4,q)
+    motor:RotateForward("A")
+    sound:PlayTone(G4,q)
+    motor:RotateBackward("A")
+    sound:PlayTone(Ab4,q)
+    motor:RotateForward("A")
+    sound:PlayTone(A4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//4 still spinning
+    motor:SetSpeed("A",120)
+    motor:RotateBackward("A")
+    sound:PlayTone(Bb4,dh)
+    motor:Stop(motor:MOTOR_B)
+    motor:Stop(motor:MOTOR_C)
+    sound:PlayTone(Eb4,q)
+//5 Move foward for 2 measures
+    motor:SetSpeed("A",30)
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(G4,dq)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(G4,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(G4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+    sound:PlayTone(G4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//6 still moving forward
+    sound:PlayTone(G4,dq)
+    sound:PlayTone(G4,e)
+    sound:PlayTone(Ab4,q)
+    sound:PlayTone(Ab4,q)
+    motor:SetSpeed("A",55)
+    motor:RotateBackward("A")
+    colorSensor:SetLightColor(colorSensor:RED)
+//7 Motors spin robot 288 degrees (4 fifth of 360) We are making a 5 point star!
+    motor:SetSpeed("B",spin72)// Set speed to ajust angle #1.
+    motor:SetSpeed("C",spin72)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(F4,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(E4,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(F4,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(G4,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(F4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(Eb4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//8 robot moves straight for 8 counts or two measures
+    motor:RotateBackward("A")    
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(D4,q)
+    sound:PlayTone(C4,q)
+    sound:PlayTone(D4,q)
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//9
+    motor:RotateForward("A")
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(Bb4,e)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//10 Motors spin robot 288 degrees #2
+    motor:SetSpeed("B",spin72)
+    motor:SetSpeed("C",spin72)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(Bb4,e)
+    sound:PlayTone(B4,q)
+    sound:PlayTone(B4,q)
+    motor:SetSpeed("A",100)
+    motor:RotateBackward("A")
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//11 robot moves straight for 8 counts or two measures
+    motor:SetSpeed("A",100)
+    motor:RotateBackward("A")    
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(C5,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+    motor:RotateForward("A")   
+    sound:PlayTone(B4,e)
+    motor:RotateBackward("A")    
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(C5,e)
+    motor:RotateForward("A")  
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(Eb5,e)
+    motor:RotateBackward("A")  
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(D5,q)
+    motor:RotateForward("A")   
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(C5,q)   
+    colorSensor:SetLightColor(colorSensor:BLUE) 
+//12 
+    motor:RotateBackward("A")   
+    sound:PlayTone(B4,dh)
+    sound:PlayTone(B4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//13 Motors spin robot 288 degrees #3
+    motor:SetSpeed("B",spin72)
+    motor:SetSpeed("C",spin72)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(Bb4,e)
+    sound:PlayTone(Eb5,dq)
+    sound:PlayTone(C5,e)
+    colorSensor:SetLightColor(colorSensor:BLUE) 
+//14 robot moves straight for 8 counts
+    motor:SetSpeed("A",40)
+    motor:RotateBackward("A")  
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(A4,e)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(G4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//15 Still moving
+    motor:SetSpeed("A",60)
+    motor:RotateForward("A")  
+    sound:PlayTone(F4,dq)
+    sound:PlayTone(Bb4,e)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//16 Motors spin robot 288 degrees #4
+    motor:SetSpeed("B",spin72)
+    motor:SetSpeed("C",spin72)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(F4,dq)
+    sound:PlayTone(Bb4,e)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//17 robot moves straight for 8 counts
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,dq)
+    motor:RotateBackward("A")
+    sound:PlayTone(Bb4,e)
+    motor:RotateForward("A")
+    sound:PlayTone(Eb5,dq)
+    motor:RotateBackward("A")
+    sound:PlayTone(C5,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//18
+    motor:RotateForward("A")
+    sound:PlayTone(Bb4,dq)
+    motor:RotateBackward("A")
+    sound:PlayTone(A4,e)
+    motor:RotateForward("A")
+    sound:PlayTone(Bb4,q)
+    motor:RotateBackward("A")
+    sound:PlayTone(Gb4,q)
+ 
+    colorSensor:SetLightColor(colorSensor:RED)
+//19 Robot has completed the star so SPIN
+    motor:SetSpeed("A",120)
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",60)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(F4,dq)
+    sound:PlayTone(A4,e)
+    sound:PlayTone(A4,q)
+    sound:PlayTone(A4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//20 Reverse spin
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,q)
+    utility:DelayMilliseconds(q)
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(Ab4,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+//21 Unreverse spin
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(G4,h)
+    sound:PlayTone(C5,dq)
+    sound:PlayTone(Bb4,e)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//22 Time for Spinning slow
+    motor:SetSpeed("B",40)
+    motor:SetSpeed("C",40)
+    motor:SetSpeed("A",20)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(D4,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:RotateForward("A")
+    sound:PlayTone(C5,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//23 return spin
+    motor:SetSpeed("B",70)
+    motor:SetSpeed("C",70)
+    motor:SetSpeed("A",40)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:RotateForward("A")
+    sound:PlayTone(Ab4,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//24 
+    motor:SetSpeed("A",120)
+    motor:RotateForward("A")
+    sound:PlayTone(G4,h)
+    motor:Stop("B")
+    motor:Stop("C")
+    sound:PlayTone(F4,dq)
+    sound:PlayTone(G4,e)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//25 Start the stripes  1
+    motor:Stop("A")
+    motor:SetSpeed("B",80)
+    motor:SetSpeed("C",80)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Ab4,q)
+    sound:PlayTone(C5,h)
+    sound:PlayTone(Eb5,q) 
+    colorSensor:SetLightColor(colorSensor:RED)
+//26 ---keep going
+    sound:PlayTone(F5,h)
+    sound:PlayTone(Eb5,dq)
+    sound:PlayTone(Eb5,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//27 turn 1
+     motor:SetSpeed("A",90)
+     motor:RotateBackward("A")
+     motor:SetSpeed("B",8)
+     motor:SetSpeed("C",80)
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(G4,w)
+    colorSensor:SetLightColor(colorSensor:RED)
+//28  Stripe 2
+    motor:Stop("A")
+    motor:SetSpeed("B",80)
+    motor:SetSpeed("C",80)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(F4,h)
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(Ab4,e)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//29 ---keep going
+    sound:PlayTone(G4,h)
+    sound:PlayTone(C5,dq)
+    sound:PlayTone(Bb4,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//30 Turn 2
+     motor:SetSpeed("A",90)
+     motor:RotateBackward("A")
+     motor:SetSpeed("B",80)
+     motor:SetSpeed("C",8)
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(D4,h)    
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(C5,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//31 Stripe 3
+    motor:Stop("A")
+    motor:SetSpeed("B",80)
+    motor:SetSpeed("C",80)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(Ab4,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//32  Keep Going
+    sound:PlayTone(G4,h)
+    sound:PlayTone(F4,dq)
+    sound:PlayTone(G4,e)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//33 Turn 3
+     motor:SetSpeed("A",90)
+     motor:RotateForward("A")
+     motor:SetSpeed("B",8)
+     motor:SetSpeed("C",80)
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Ab4,q)
+    sound:PlayTone(C5,q)
+    sound:PlayTone(F5,dq)
+    sound:PlayTone(Eb5,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+//34  Stripe 4
+    motor:Stop("A")
+    motor:SetSpeed("B",80)
+    motor:SetSpeed("C",80)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(G4,q)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(Eb4,dq)
+    sound:PlayTone(G4,e)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//35 Keep going
+    sound:PlayTone(F4,w)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//36 Done with Strips get set for Chorus
+    motor:SetSpeed("B",15)
+    motor:SetSpeed("C",15)
+    motor:SetSpeed("A",120)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Eb4,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//Chorus starts here
+    motor:Stop("A")
+    motor:Stop("B")
+    motor:Stop("C")
+     sound:PlayTone(Eb5,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//37 Make 3 loops along a straight line
+    motor:SetSpeed("A",20)
+    motor:RotateForward("A")
+    motor:SetSpeed("B",90)
+    motor:SetSpeed("C",90)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Eb5,h)
+    sound:PlayTone(Db5,q)
+    sound:PlayTone(C5,q) 
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//38  Loop 1
+    motor:SetSpeed("A",120)
+    motor:RotateBackward("A")
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",40)
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(C5,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(B4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//39 straight line
+    motor:SetSpeed("A",20)
+    motor:RotateForward("A")
+    motor:SetSpeed("B",90)
+    motor:SetSpeed("C",90)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(C5,w)  
+//40 Loop 2
+    motor:SetSpeed("A",120)
+    motor:RotateBackward("A")
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",40)
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(C5,h)  
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(B4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//41 Straight Line
+    motor:SetSpeed("A",20)
+    motor:RotateForward("A")
+    motor:SetSpeed("B",90)
+    motor:SetSpeed("C",90)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(C5,h)
+    sound:PlayTone(B4,q)
+    sound:PlayTone(C5,q)    
+    colorSensor:SetLightColor(colorSensor:RED)
+//42 Loop 3
+    motor:SetSpeed("A",120)
+    motor:RotateBackward("A")
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",40)
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Eb5,h)
+    sound:PlayTone(C5,q)
+    sound:PlayTone(Eb5,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//43 straight line
+    motor:SetSpeed("A",20)
+    motor:RotateForward("A")
+    motor:SetSpeed("B",90)
+    motor:SetSpeed("C",90)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Db5,w) // end of the loops
+    colorSensor:SetLightColor(colorSensor:RED)
+//44 turn around
+    motor:SetSpeed("B",80)
+    motor:SetSpeed("C",10)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,dh)
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//45 zig zag
+    motor:SetSpeed("A",50)
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",15)
+    motor:RotateForward("A") //1
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,h)
+    motor:SetSpeed("B",15)
+    motor:SetSpeed("C",200)
+    motor:RotateBackward("A") //2
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(A4,q)
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",15)
+    motor:RotateForward("A") //3
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,q)   
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//46 zig zag
+    motor:SetSpeed("B",15)
+    motor:SetSpeed("C",200)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,h)
+    motor:SetSpeed("B",15)
+    motor:SetSpeed("C",200)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(A4,q)
+    motor:SetSpeed("B",15)
+    motor:SetSpeed("C",200)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//47 Slow Spin
+    motor:SetSpeed("A",10)
+    motor:SetSpeed("B",30)
+    motor:SetSpeed("C",30)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Db5,w)
+//48 spinning and revsersing
+    motor:SetSpeed("A",40)
+    motor:SetSpeed("B",120)
+    motor:SetSpeed("C",120)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Db5,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:SetSpeed("C",120)
+    motor:SetSpeed("B",120)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+    motor:SetSpeed("B",120)
+    motor:SetSpeed("C",120)
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//49 Forward and spin
+    motor:Stop("A")
+    motor:SetSpeed("B",100)
+    motor:SetSpeed("C",100)
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(C5,q)
+    motor:RotateForward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Eb5,dh)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//50 backand spin
+    motor:Stop("A")
+    motor:RotateBackward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(F5,dh)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(F5,q)  
+    colorSensor:SetLightColor(colorSensor:RED)
+//51 Curve Right
+    motor:SetSpeed("A",25)
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",66)
+    motor:RotateForward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Bb4,w)
+//52 Curve Left & right
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",200)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")  
+    sound:PlayTone(Bb4,q)
+    motor:SetSpeed("C",200)
+    motor:SetSpeed("B",60)
+    motor:RotateForward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    utility:DelayMilliseconds(q)
+    motor:SetSpeed("B",100)
+    motor:SetSpeed("C",101)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Eb5,h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//53 Spin
+    motor:SetSpeed("A",33)
+    motor:SetSpeed("B",100)
+    motor:SetSpeed("C",101)
+    motor:RotateForward("A")
+    motor:RotateBackward("C")
+    motor:RotateForward("B")
+    sound:PlayTone(Eb5,h)
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",60)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateForward("C") 
+    sound:PlayTone(Db5,q)
+    motor:SetSpeed("B",60)
+    motor:SetSpeed("C",200)
+    motor:RotateForward("A")
+    motor:RotateBackward("C")
+    motor:RotateForward("B") 
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//54
+    motor:SetSpeed("B",100)
+    motor:SetSpeed("C",101)
+    motor:RotateBackward("A")
+    motor:RotateBackward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(C5,h)
+    motor:SetSpeed("B",300)
+    motor:SetSpeed("C",77)
+    motor:RotateForward("A")
+    motor:RotateBackward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(B4,q)
+    motor:SetSpeed("B",77)
+    motor:SetSpeed("C",300)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//55 Backup curve
+    motor:SetSpeed("B",7)
+    motor:SetSpeed("C",33)
+    motor:Stop("A")
+    motor:RotateBackward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(C5,w)  
+  
+//56 Start Sprial to End
+    motor:SetSpeed("A",20)
+    motor:RotateForward("A")
+    motor:SetSpeed("B",200)
+    motor:SetSpeed("C",100)
+    motor:RotateBackward("B")
+    motor:RotateBackward("C")  
+    sound:PlayTone(C5,h)      
+    colorSensor:SetLightColor(colorSensor:RED)
+    sound:PlayTone(B4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//57 large sprial
+    motor:SetSpeed("B",210)
+    motor:SetSpeed("C",95)
+    motor:SetSpeed("A",40)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")  
+    sound:PlayTone(C5,w+h)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+     motor:SetSpeed("B",220)
+     motor:SetSpeed("C",90)
+    motor:SetSpeed("A",60)
+    motor:RotateForward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")  
+    sound:PlayTone(B4,q)
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:WHITE)
+//58
+    motor:SetSpeed("B",230)
+    motor:SetSpeed("C",85)
+    motor:SetSpeed("A",80)
+    motor:RotateBackward("A")
+    motor:RotateForward("B")
+    motor:RotateForward("C")
+    sound:PlayTone(Db5,q)
+    sound:PlayTone(C5,q)
+    sound:PlayTone(Bb4,dq)
+    sound:PlayTone(G5,e)
+    colorSensor:SetLightColor(colorSensor:RED)
+//59    
+     motor:SetSpeed("B",240)
+     motor:SetSpeed("C",80)
+    motor:SetSpeed("A",100)
+    motor:RotateForward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Bb4,w)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//60
+    motor:SetSpeed("B",250)
+     motor:SetSpeed("C",75)
+    motor:SetSpeed("A",130)
+    motor:RotateBackward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Ab4,dh)
+    sound:PlayTone(Ab4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//61
+    motor:SetSpeed("B",260)
+     motor:SetSpeed("C",70)
+    motor:SetSpeed("A",160)
+    motor:RotateForward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Ab4,h)
+    sound:PlayTone(G4,q)
+    sound:PlayTone(Ab5,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//62
+    motor:SetSpeed("B",300)
+     motor:SetSpeed("C",60)
+    motor:SetSpeed("A",200)
+    motor:RotateBackward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(B4,h)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(Ab5,q)
+
+//63-64
+    motor:SetSpeed("B",310)
+     motor:SetSpeed("C",50)
+    motor:SetSpeed("A",230)
+    motor:RotateForward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Ab5,w+q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:SetSpeed("B",311)
+     motor:SetSpeed("C",40)
+    motor:SetSpeed("A",260)
+    motor:RotateBackward("A")
+     motor:RotateForward("B")
+     motor:RotateForward("C")
+    sound:PlayTone(Ab4,q)
+    sound:PlayTone(Bb4,q)
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+
+//65
+    motor:SetSpeed("B",500)
+    motor:SetSpeed("C",500)
+    motor:SetSpeed("A",100)
+    motor:RotateForward("A")
+    motor:RotateForward("B")
+    motor:RotateBackward("C")
+    sound:PlayTone(Eb5,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:RotateBackward("A")
+    sound:PlayTone(Ab4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+    motor:RotateForward("A")
+    sound:PlayTone(Bb4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:RotateBackward("A")
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+//66
+    motor:RotateForward("A")
+    sound:PlayTone(Eb5,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+    motor:RotateBackward("A")
+    sound:PlayTone(Eb4,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+    motor:RotateForward("A")
+    sound:PlayTone(F4,q)
+    colorSensor:SetLightColor(colorSensor:RED)
+    motor:RotateBackward("A")
+    sound:PlayTone(C5,q)
+    colorSensor:SetLightColor(colorSensor:BLUE)
+//67-68
+    motor:SetSpeed("A",500)
+    motor:RotateForward("A")
+    sound:PlayTone(Bb4,w)    
+    colorSensor:SetLightColor(colorSensor:WHITE)
+    sound:PlayTone(Ab4,h)
+    colorSensor:SetLightColor(colorSensor:RED)
+//something extra at the end.
+    motor:Stop("A")
+    motor:Stop("B")
+    motor:Stop("C")
+utility:DelayMilliseconds(h)
+sound:SetVolume(100)
+sound:PlayAudio(audio2)
+utility:DelayMilliseconds(w)
+
+
+    
