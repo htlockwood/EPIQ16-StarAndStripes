@@ -642,7 +642,7 @@ motor:SetSpeed("C",60)
     motor:Stop("A")
     motor:Stop("B")
     motor:Stop("C")
-     sound:PlayTone(Eb5,h)
+    sound:PlayTone(Eb5,h)
     colorSensor:SetLightColor(colorSensor:BLUE)
 //37 Make 3 loops along a straight line
     motor:SetSpeed("A",20)
